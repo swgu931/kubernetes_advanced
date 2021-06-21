@@ -1,0 +1,12 @@
+
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.2.0/aio/deploy/recommended.yaml
+
+kubectl proxy 
+
+kubectl proxy --port=8080 --address='34.64.222.186' --disable-filter=true &
+
+
+
+
+

@@ -1,0 +1,114 @@
+1일차
+
+
+kubernetes dashboard.
+
+ref: https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/creating-sample-user.md
+
+
+kubectl apply -f service-account.yaml
+kubectl -n kube-system get sa
+
+kubectl apply -f cluster-role-binding.yaml
+
+
+kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
+
+kubectl -n kubernetes-dashboard get secret $(kubectl -n kubernetes-dashboard get sa/admin-user -o jsonpath="{.secrets[0].name}") -o go-template="{{.data.token | base64decode}}"
+
+
+token
+---
+eyJhbGciOiJSUzI1NiIsImtpZCI6IjFkZWFyTUVTQTFZbVVFLXJKVXlhZzlyc2ViYlZCSVJjbVJFWmhzd2RibzQifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJhZG1pbi11c2VyLXRva2VuLXY5Y25wIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6ImFkbWluLXVzZXIiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiJhMzQ2YjdiOS1jZGJjLTRiNjMtOGU2Yi0wNDNkNmVhZjM0NWUiLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6a3ViZS1zeXN0ZW06YWRtaW4tdXNlciJ9.UMKJua1ZqWPHIraA6wiEPlmAY6qQ3eHeeJ32XrpN5Q_zLjx8d6q4LSBTCUqYOdK4SvNwQxERTpLEOoGnbFGnri-Q6VyqIRwQOZUtdpyRaSQzPx-21qfIq4rTwsZIUmK6LFNxGE95FeYRYXw67JOsQzGhd_1QPOysrPiPAIx4kzNrgCtsmUxTH4xzyhYZ_iLYCJhmR259DvsCvmE8L5u9LkKn-03QqhGd5oMWX_Skc3G32VZ0eTHYtn7_trlq9lW5OOm_wbQmyoNCVnbRxf8ptx3ONrP6yzU7_s2ol1JUk6BFyhg5mrqPOZOqV6YPMQv4hBJWwlcLEBgjvelPZaub5w
+---
+
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.2.0/aio/deploy/recommended.yaml
+
+kubectl proxy 
+
+kubectl proxy --port=8080 --address=34.64.222.186 --disable-filter=true &
+kubectl proxy --port=8080 --address=10.102.21.65 --disable-filter=true &
+
+
+
+-- 접속
+http://127.0.0.1:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/#!/pod?namespace=default
+or
+토큰이 있는 경우:
+http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#/login
+
+
+
+
+
+## 외부에서 보기 위한 방법
+
+https://github.com/kubernetes/dashboard/blob/master/docs/user/accessing-dashboard/README.md#login-not-available
+
+
+
+========================================================
+
+wget https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.3.6/components.yaml
+
+vi component.yaml
+
+---
+
+      containers:
+      - name: metrics-server
+        image: k8s.gcr.io/metrics-server-amd64:v0.3.6
+        imagePullPolicy: IfNotPresent
+        args:
+          - --cert-dir=/tmp
+          - --secure-port=4443   #추가
+          - --kubelet-insecure-tls  #추가 
+          - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname  #추가
+---
+
+kubectl top pods -n kube-system
+
+
+
+===========================
+
+mkdir php
+cd php
+vi index.php
+vi Dockerfile
+
+sudo docker build --tag swgu931/php-apache # sudo docker build --tag lookerz/php-apache
+
+
+hpa-test.yaml
+autoscaler.yaml
+
+kubectl run --generator=run-pod/v1 -it --rm load-generator --image=busybox /bin/sh
+  # while true; do wget -q -O- http://php-apache.default.svc.cluster.local; done15
+
+
+  kubectl top pods -n kube-system
+
+
+
+
+
+  =================================
+
+  prometheus
+
+
+  root@gce-k8s-master:~/day1/prometheus# kubectl create ns monitoring
+
+root@gce-k8s-master:~/day1/prometheus# kubectl apply -f prometheus-cluster-role.yaml 
+
+root@gce-k8s-master:~/day1/prometheus# kubectl apply -f prometheus-config-map.yaml 
+
+root@gce-k8s-master:~/day1/prometheus# kubectl apply -f prometheus-deployment.yaml 
+
+root@gce-k8s-master:~/day1/prometheus# kubectl apply -f prometheus-node-exporter.yaml 
+
+
+root@gce-k8s-master:~/day1/prometheus# kubectl apply -f prometheus-svc.yaml 
+
