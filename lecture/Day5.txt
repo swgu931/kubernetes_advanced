@@ -1,0 +1,53 @@
+# Helm
+
+## ref: https://github.com/helm/helm
+## ref: https://helm.sh/docs/intro/install/
+
+curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+chmod 700 get_helm.sh
+./get_helm.sh
+
+# or curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash  # if you want to live on the edge 
+
+helm version
+
+helm search hub 
+helm search hub | wc -l 
+
+# ref: https://helm.sh/docs/intro/using_helm/
+
+helm repo add brigade https://brigadecore.github.io/charts
+helm search repo brigade
+helm search repo kash
+
+helm search hub mariadb
+
+https://artifacthub.io/packages/search?kind=0
+
+https://helm.sh/blog/charts-repo-deprecation/
+
+
+## Helm 차트 저장소 초기화
+
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm search repo bitnami
+helm repo update
+
+## 차트를 설치하려면 helm install 명령을 실행
+helm install bitnami/mariadb --generate-name
+
+helm ls 
+
+
+helm uninstall mariadb-1373494954
+helm ls
+helm status mariadb-1373494954
+
+helm search hub wordpress 
+
+helm show values bitnami/wordpress 
+
+helm install lookerz-wordpress bitnami/wordpress 
+
+helm status lookerz-wordpress 
+

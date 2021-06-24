@@ -116,7 +116,7 @@ k3s@master:~/바탕화면$ curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC=" \
 > --disable traefik \
 > --disable metrics-server \
 > --node-name master1 --docker" \
-> INSTALL_K3S_VERSION="v1.20.0-rc4+k3s1" sh -s –
+> INSTALL_K3S_VERSION="v1.20.0-rc4+k3s1" sh -s –  
 [INFO]  Using v1.20.0-rc4+k3s1 as release
 [INFO]  Downloading hash https://github.com/k3s-io/k3s/releases/download/v1.20.0-rc4+k3s1/sha256sum-amd64.txt
 [INFO]  Downloading binary https://github.com/k3s-io/k3s/releases/download/v1.20.0-rc4+k3s1/k3s
@@ -151,10 +151,6 @@ INSTALL_K3S_EXEC="--node-name m1-worker1 --docker" \
 INSTALL_K3S_VERSION="v1.20.0-rc4+k3s1" sh -s –
 
 
-
-mkdir ~/.kube
-sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
-sudo chown -R $(id -u):$(id -g) ~/.kube
 
 
 

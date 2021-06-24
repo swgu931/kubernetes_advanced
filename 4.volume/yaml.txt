@@ -21,6 +21,7 @@ spec:
   - name: shared-volume 
     emptyDir: {}
 
+-----
 
 cat > hostpath-pod.yaml
 apiVersion: v1
@@ -63,7 +64,7 @@ spec:
       hostPath:
         path: /tmp
 
-
+----
 cat > local-storage-class.yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -74,7 +75,7 @@ volumeBindingMode: WaitForFirstConsumer
 
 
 
-
+------
 cat > hostpath-pv.yaml
 apiVersion: v1
 kind: PersistentVolume
@@ -121,6 +122,8 @@ spec:
     persistentVolumeClaim:
       claimName: my-pvc
 	  
+
+-----    
 cat > my-pvc-sc.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -152,7 +155,7 @@ spec:
     volumeMounts:
     - mountPath: "/usr/share/nginx/html"
       name: vol
-
+------
   
 	
 	  
@@ -202,7 +205,7 @@ spec:
           run: web
 
 
-
+-----
 cat > db-accessable.yaml
 kind: NetworkPolicy
 apiVersion: networking.k8s.io/v1
@@ -222,7 +225,7 @@ spec:
     - protocol: TCP
       port: 80
 
-
+---
 
 cat > allow-dmz.yaml
 kind: NetworkPolicy
@@ -243,6 +246,8 @@ spec:
     - protocol: TCP
       port: 80
 	  
+
+
 cat > dont-leave-dev.yaml
 kind: NetworkPolicy
 apiVersion: networking.k8s.io/v1
@@ -256,7 +261,7 @@ spec:
     - podSelector: {}
 
 
-cat > full-network-policy
+cat > full-network-policy.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

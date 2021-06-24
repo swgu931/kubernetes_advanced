@@ -119,10 +119,49 @@ kubectl create -f web-server.yaml
 
 
 kubectl create -f factorial-job.yaml
+kubectl get job
+kubectl get po
+kubectl logs -f factorial5-qdlqp
+
+---
 kubectl create -f parallel-job.yaml
+
+
+
 kubectl create -f cron-demo-job.yaml
 
 ------
+
+## 리소스 할당
+
+kubectl create namespace ns
+kubectl config set-context ns --namespace=ns --user=default --cluster=default
+kubectl config use-context ns   # kubectl config use-context default 
+kubectl config view
+
+
+
+kubectl create -f compute-quota.yaml
+kubectl get quota
+kubectl describe quota compute-quota
+
+kubectl create -f object-count-quota.yaml
+kubectl get quota
+kubectl describe quota object-counts-quota
+
+kubectl create -f nginx-deployment.yaml
+kubectl describe deployment nginx
+
+kubectl-run-nginx.sh
+
+kubectl get pods
+
+kubectl create -f nginx-deployment-with-resources.yaml
+
+kubectl create -f limits.yaml
+
+kubectl describe limits
+
 
 
 
