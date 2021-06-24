@@ -1,0 +1,201 @@
+
+# volume
+
+## share between containers in pod
+
+kubectl create -f hue-scheduler.yaml
+
+kubectl exec -it hue-scheduler -c hue-global-listener -- touch /notifications/1.txt
+kubectl exec -it hue-scheduler -c hue-job-scheduler -- ls /incoming
+kubectl exec -it hue-scheduler -c hue-global-listener -- touch /incoming/2.txt
+kubectl exec -it hue-scheduler -c hue-job-scheduler -- ls /notifications
+
+---
+
+##  hostpath
+
+kubectl create -f hostpath-pod.yaml
+kubectl get node -o wide
+kubectl exec -it hostpath-pod -- touch /etc/data/mydata.txt
+@worker1 /#  ls /tmp
+
+
+kubectl create -f hostpath-pod-security.yaml
+
+kubectl exec -it hostpath-pod -- touch /etc/data/mydata.txt
+@worker1 /#  ls /tmp
+
+
+---
+
+kubectl create -f hostpath-pv.yaml
+kubectl get pv
+
+kubectl create -f my-pvc.yaml
+kubectl get pvc
+
+kubectl create -f use-pvc.yaml
+kubectl get pod -o wide
+
+
+kubectl exec use-pvc -- sh -c "echo 'hello' > /test-volume/hello.txt"
+kubectl exec use-pvc -- cat /test-volume/hello.txt
+kubectl delete pod use-pvc
+
+kubectl apply -f use-pvc.yaml
+kubectl exec use-pvc -- cat /test-volume/hello.txt
+
+---
+
+
+kubectl get sc
+kubectl create -f my-pvc-sc.yaml
+kubectl get pvc
+kubectl create -f use-pvc-sc.yaml
+
+
+============================
+# network
+
+
+
+
+kubectl apply -f https://docs.projectcalico.org/manifests/canal.yaml
+
+kubectl run client --image nginx
+
+kubectl create -f deny-all.yaml
+kubectl get networkpolicy
+
+kubectl get networkpolicy deny-all -oyaml
+
+---
+
+kubectl create -f web-open.yaml
+kubectl run web --image nginx
+kubectl run non-web --image nginx
+kubectl get pod -o wide
+
+kubectl exec -it client -- bash 
+  ## web, non-web 을 curl 로 호출해보자 
+/# curl 10.42.0.169
+/# curl 10.42.03.23
+---
+
+
+--------------------------
+
+## Web 과의 통신만 허용된 app
+
+kubectl create -f allow-from-web.yaml
+
+kubectl run app --image nginx
+kubectl get pod -o wide
+
+
+### clinet pod 진입후 app 서버 호출
+
+kubectl exec -it client -- bash
+---
+/# curl 10.42.2.15
+---
+
+### web pod 진입후 web에서 app 서버 호출
+kubectl exec -it web -- bash
+---
+/# curl 10.42.2.23
+---
+
+### web pod 진입후 non-web에서 app 서버 호출
+kubectl exec -it web -- bash
+---
+/# curl 10.42.2.23
+---
+
+## DB접근 Pod
+kubectl create db-accessable.yaml
+kubectl run db --image nginx
+kubectl run app --image nginx
+kubectl get pod -o wide
+
+kubectl exec -it app -- bash
+---
+/# curl 10.42.3.3   ## db pod ip
+---
+
+
+kubectl label pod app db-accessible=true
+kubectl get pod -n dmz --show-labels
+
+kubectl exec -it app -- bash
+---
+/# curl 10.42.3.3   ## db pod ip
+---
+
+
+kubectl apply -f allow-dmz.yaml
+kubectl delete networkpolicy web-open
+kubectl create ns dmz
+kubectl lable namespace dmz zone=dmz
+kubectl run proxy --image nginx -n dmz
+
+kubectl get pod -o wide -n dmz
+
+kubectl exec -it proxy -n dmz -- bash
+---
+/# curl 10.24.0.4 
+---
+
+
+====================
+# Outboud 정책
+
+kubectl create ns dev
+kubectl dont-leave-dev.yaml
+kubectl run dev1 --image nginx -n dev
+kubectl run dev2 --image nginx -n dev
+
+kubectl get pod -o wide -n dev
+kubectl exec -it dev1 -n dev -- bash
+---
+/# curl 10.42.1.6   ## dev2 ip
+/# curl 10.42.3.5   ## namespace 가 다른 포드 ip
+---
+
+=========================
+
+## kubectl expose deployemnt api-gateway --port --target-port=5000 --name=api-gateway --type=LoadBalancer
+
+kubectl create -f api-gateway.yaml
+kubectl descirbe services api-gateway
+
+kubectl create -f hello-application.yaml
+
+kubectl get replicasets
+kubectl get pods
+
+kubectl expose deployment hello-world --type=NodePort --name=example-service
+kubectl get pods --selector="run=load-balancer-example" --output=wide
+
+============
+
+
+# Prometheus-Grafana
+
+kubectl create ns monitoring
+kubectl apply -f prometheus-cluster-role.yaml
+kubectl apply -f prometheus-config-map.yaml
+kubectl apply -f prometheus-deployment.yaml
+kubectl apply -f prometheus-node-exporter.yaml
+kubectl apply -f prometheus-svc.yaml
+
+kubectl get pod -n monitoring
+
+kubectl apply -f grafana-datasource-config.yaml
+kubectl apply -f grafana-deployment.yaml
+kubectl apply -f grafana-service.yaml
+
+
+## 접속 id: admin / passwd: admin
+
+

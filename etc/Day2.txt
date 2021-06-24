@@ -1,0 +1,196 @@
+# High Availability
+
+
+#Reinstall master node
+
+
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="\ --disable traefik \ --disable metrics-server \ --node-name master --docker" \ INSTALL_K3S_VERSION="v1.20.0-rc4+k3s1" sh -s –
+
+# check if ~/.kube  exist
+
+sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+sudo chown -R $(id -u):$(id -g) ~/.kube
+echo "export KUBECONFIG=~/.kube/config" >> ~/.bashrc
+source ~/.bashrc
+
+
+# see the token
+sudo cat /var/lib/rancher/k3s/server/node-token
+
+# check ip address
+kubectl get node master -ojsonpath="{.status.addresses[0].address}"
+
+
+===================
+
+#Reinstall worker node
+
+NODE_TOKEN=토큰값
+MASTER_IP=IP
+curl -sfL https://get.k3s.io | K3S_URL=https://$MASTER_IP \ K3S_TOKEN=$NODE_TOKEN \ INSTALL_K3S_EXEC="--node-name worker1 --docker" \ INSTALL_K3S_VERSION="v1.20.0-rc4+k3s1" sh -s –
+
+
+
+========================
+
+edcd operator
+
+git clone https://github.com/coreos/etcd-operator
+cd etcd-operator
+./example/rbac/create_role.sh
+
+
+vi deployment.yaml
+
+---
+  selector:
+    matchLabels:
+      name: etcd-operator
+  replicas: 3
+  template:
+    metadata:
+---
+
+kubectl create -f deployment.yaml
+cd etcd-operatorster-health
+
+kubectl exec example-etcd-cluster-74xvlgwkz9 etcdctl set test "Hello etcd~"
+kubectl exec example-etcd-cluster-74xvlgwkz9 etcdctl get test
+
+
+
+## scale out
+
+vi example-etcd-cluster.yaml
+---
+size: 3  ==> 5
+---
+
+kubectl get pods -o wide | grep etcd-cluster
+
+
+===========================================
+
+kubectl create -f leader-elector.yaml
+
+kubectl get pods | grep elector
+
+
+
+============================
+
+## upgrade
+
+kubectl create -f nginx-deployment.yaml
+kubectl rollout status deployment/nginx-deployment
+kubectl get deployment nginx-deployment -o yaml | grep strategy -A 4
+
+
+
+kubectl create -f echo-version.yaml
+kubectl create -f update-checker.yaml
+kubectl logs echo-version
+
+kubectl patch deployment echo-version -p '{"spec":{"template":{"spec":{"containers":[{"name":"echo-version","image":"gihyodocker/echo-version:0.2.0"}]}}}}'
+
+kubectl logs echo-version
+
+
+=====
+
+kubectl create -f echo-version-blue.yaml
+kubectl create -f echo-version-green.yaml
+kubectl create -f echo-version-bluegreen-service.yaml
+
+kubectl patch service echo-version -p '{"spec":{"selector":{"color":"green"}}}'
+
+
+
+
+=======================================
+
+kubectl get serviceAccounts
+kubectl create -f custom-services-account.yaml 
+kubectl get sa
+
+
+kubectl create serviceaccount sa1
+kubectl get serviceaccounts/custom-service-account
+
+kubectl get secrets
+kubectl get secrets/custom-service-account-token-6vhmj -o yaml
+kubectl describe secret custom-service-account-token-6vhmj
+
+kubectl get secrets/sa1-token-7z4jm  -o yaml
+
+
+## 클라이언트에서 API 서버 접근 하는 유형에 대해 살펴보는 조회 명령어
+kubectl -v=7 get po pod-1
+===============================================
+
+
+cat /etc/kubernetes/admin.conf
+
+export KUBECONFIG=/etc/kubernetes/admin.conf
+or
+sudo cp /etc/kubernetes/admin.conf ~/.kube/config
+
+cat ~/.kube/config
+
+---
+
+
+sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+
+
+--------------------------
+
+kubectl create secret docker-registry regcred --docker-server=https://index.docker.io/v2 --docker-username=<id> --docker-password=<...> --docker-email=<xxx@chol.com> 
+kubectl create secret docker-registry regcred --docker-server=lookerz-private --docker-username=계정아이디 --docker-password=비밀번호 --docker-email=이메일 
+kubectl get secret regcred --output=yaml 
+kubectl get secret regcred --output="jsonpath={.data.\.dockerconfigjson}" | base64 --decode echo "앞에서 조회한 토큰 값" | base64 --decode
+
+
+-----------------------------
+
+
+## AppArmor
+
+kubectl get nodes -o=jsonpath=$'{range .items[*]}{@.metadata.name}: {@.status.nodeInfo.kubeletVersion}\n{end}'
+
+cat /sys/module/apparmor/parameters/enabled
+
+sudo cat /sys/kernel/security/apparmor/profiles
+
+kubectl get nodes -o=jsonpath=$'{range .items[*]}{@.metadata.name}: {.status.conditions[?(@.reason=="KubeletReady")].message}\n{end}'
+
+ssh master "sudo cat /sys/kernel/security/apparmor/profiles | sort"
+sudo cat /sys/kernel/security/apparmor/profiles | sort
+
+
+kubectl create -f hello-apparmor.yaml
+kubectl get events | grep hello-apparmor
+kubectl exec hello-apparmor cat /proc/1/attr/current
+
+kubectl exec hello-apparmor touch /tmp/test
+
+
+===================================
+
+kubectl apply -f hello-allow-from-foo.yaml
+
+kubectl describe networkpolicy.networking.k8s.io
+
+
+kubectl run -l app=foo --image=alpine --restart=Never --rm -it test-1
+/# wget -qO- --timeout=2 http://hello-web:8080
+/# exit
+
+
+kubectl run -l app=other --image=alpine --restart=Never --rm -it test-1
+/# wget -qO- --timeout=2 http://hello-web:8080
+/# exit
+
+
+
+

@@ -4,11 +4,18 @@ sudo apt update
 sudo apt install -y docker.io nfs-common dnsutils curl
 
 
-curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="\
+# curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="\
+# --disable traefik \
+# --disable metrics-server \
+# --node-name master --docker" \
+# INSTALL_K3S_VERSION="v1.18.6+k3s1" sh -s --
+
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC=" \
+server --cluster-init \
 --disable traefik \
 --disable metrics-server \
---node-name master --docker" \
-INSTALL_K3S_VERSION="v1.18.6+k3s1" sh -s --
+--node-name master1 --docker" \
+INSTALL_K3S_VERSION="v1.20.0-rc4+k3s1" sh -s –
 
 mkdir ~/.kube
 sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config

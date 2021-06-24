@@ -1,0 +1,144 @@
+# Hue Platform
+
+cat > Dockerfile
+---
+FROM busybox
+CMD ash -c "echo 'Started...'; while true; do sleep 10; done"
+---
+
+docker build -t swgu931/hue-learn:0.3 .
+docker build -t swgu931/hue-learn:0.4 .
+
+
+
+kubectl get po -n kube-system --show-labels
+
+kubectl create -f hue-learn-deployment.yaml
+kubectl get pods -l app=hue
+kubectl get pods -o jsonpath='{.items[*].spec.containers[0].image}'
+
+kubectl create -f hue-learn-deployment.yaml # 0.4로 수정
+
+kubectl get pods -l app=hue
+
+kubectl get pods -o jsonpath='{.items[*].spec.containers[0].image}'
+
+-----------------
+
+docker build -t swgu931/hue-reminders:3.0 .
+docker push swgu931/hue-reminders:3.0 
+kubectl create -f hue-reminders-deployment.yaml
+
+kubectl create -f hue-reminders-service.yaml
+
+kubectl get svc
+
+kubectl exec hue-reminders-774f7f99d8-kqs2f -- nslookup hue-reminders.default.svc.cluster.local
+
+kubectl exec hue-learn-697df77c88-55d5f -- nslookup hue-learn.default.svc.cluster.local
+
+kubectl exec hue-reminders-774f7f99d8-54czw -- wget -q -O - hue-reminders.default.svc.cluster.local:8080
+
+------
+
+## nodeSelector
+
+kubectl describe node | grep kubernetes.io/hostname
+vi trouble-shooter.yaml
+---
+spec: 
+  nodeSelector: 
+    kubernetes.io/hostname: sm-restt
+---
+
+kubectl create -f trouble-shooter.yaml
+
+
+tip)
+마스터노드를 워커노드로 함께 사용할 경우 (single node cluster 의 경우)
+$kubectl taint nodes --all node-role.kubernetes.io/master-
+
+---
+
+
+## Taint and tolerations
+
+kubectl taint node worker1 project=A:NoSchedule
+kubectl get node worker1 -oyaml | grep -A 4 taints
+
+kubectl create -f no-tolerate.yaml
+### worker2 에만 할당됨.
+
+kubectl create -f tolerate.yaml
+### key, value 가 맞으면 할당됨. (worker1 에도 할당할 수 있음)
+
+
+---
+
+kubectl taint node worker1 badsector=:NoSchedule
+kubectl get node worker1 -o yaml | grep -A 7 taints
+kubectl create -f badsector.yaml
+kubectl get pod -o wide
+
+---
+## untaint
+kubectl taine node worker1 project-
+---
+kubectl delete pod --all
+---
+
+## Affinity & AntiAffinity
+### NodeAffinity
+
+
+kubectl create -f node-affinity.yaml
+kubectl get pods -o wide
+
+kubectl label node sm-restt disktype=ssd
+kubectl get pods -o wide
+
+kubectl label node worker1 disktype=ssd
+
+### PodAffinity
+
+kubectl create -f pod-affinity.yaml
+kubectl get pods -o wide
+
+kubectl create -f pod-antiaffinity.yaml
+kubectl get pods -o wide
+
+
+---------------------
+
+## cache 서버 설정
+
+kubectl create -f redis-cache.yaml
+kubectl create -f web-server.yaml
+
+-----
+
+
+kubectl create -f factorial-job.yaml
+kubectl create -f parallel-job.yaml
+kubectl create -f cron-demo-job.yaml
+
+------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

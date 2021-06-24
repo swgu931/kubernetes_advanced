@@ -1,0 +1,14 @@
+﻿apiVersion: v1 
+kind: Pod 
+metadata: 
+  name: trouble-shooter 
+  labels: 
+    role: trouble-shooter 
+spec: 
+  nodeSelector: 
+    kubernetes.io/hostname: sm-restt
+  containers: 
+  - name: trouble-shooter 
+    image: g1g1/py-kube:0.2 
+    command: ["bash"] 
+    args: ["-c", "echo started...; while true ; do sleep 1 ; done"]

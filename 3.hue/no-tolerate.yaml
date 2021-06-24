@@ -1,0 +1,8 @@
+﻿apiVersion: v1 
+kind: Pod 
+metadata: 
+  name: no-tolerate 
+spec: 
+  containers: 
+  - name: nginx 
+    image: nginx
