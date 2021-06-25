@@ -1,0 +1,100 @@
+# 5일차 과제
+
+## 현재 현업의 쿠버네티스 yaml은 여러가지 앱의 deployment, configmap, security, 볼륨 관련임.
+## 현업에서 구성된 쿠버네티스 앱 구성 yaml 을 관리의 복잡도를 줄이기 위해 Helm chart 로 변경하고 싶으나,
+## helm 자체 문법을 몰라서 다음 내용의 과제로 제출함.
+
+## 클러스터 구현을 위한 아키텍처 구성
+
+## 현재 현업에 구성된 구성에서 모니터링과 네트워킹 정책 적용을 위한 아키텍처 확장 계획을 간단히 설계
+## 현재 구성되거나 구성될 앱은 mysql, frontend-web, core-app, 통신모듈(TCP/IP) 임.
+## - mysql 은 core-app에서만 접근 가능하도록 설계
+## - frontend-web은 core-app 을 통해 mysql 접근
+## - 통신모듈은 원격 디바이스와 통신함
+## - LoadBalancer 를 2개 설계: 외부 TCP/IP 통신모듈용, frontend-web용
+## - 리소스의 오브젝트들이 사용할 환경변수는 configmap을 통햇 배포함.
+## - 복잡하고 사이즈가 큰 파라미터 파일들은 nfs 를 통해 공유함.
+
+## Step 1: 모니터링은 4일차에 배운 prometheus-grafana를 활용
+## Step 2: Networkpolicy는 mysql 에 접근할 수 있는 app 은 core-app 으로 제한하고, namespace 도 동일할 경우 접근하도록 하고,
+##         통신모듈 (comm_bridge)는 ingress/egress 를 포트 범위로 지정
+
+===========================================
+# Step 1: 모니터링
+## 4일차에 배운 prometheus-grafana deploy함 : 자체 동작 확인 완료 
+## mysql 설치 이후, grafana data source 에 mysql 추가 예정
+
+
+kubectl create ns monitoring
+kubectl apply -f prometheus-cluster-role.yaml
+kubectl apply -f prometheus-config-map.yaml
+kubectl apply -f prometheus-deployment.yaml
+kubectl apply -f prometheus-node-exporter.yaml
+kubectl apply -f prometheus-svc.yaml
+
+kubectl apply -f grafana-datasource-config.yaml
+kubectl apply -f grafana-deployment.yaml
+kubectl apply -f grafana-service.yaml
+
+kubectl get pod -n monitoring
+
+========
+
+# Step 2: 네트워크 정책 적용
+## mysql-db 는 core-app을 통해서만 접근가능하도록 설정, namespace 도 동일해야함.
+## 통신모듈인 comm_bridge는 내/외부 통신을위한 포트 범위로 지정함
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: db-network-policy
+  namespace: nav2
+spec:
+  podSelector:
+    matchLabels:
+      role: mysql-db
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          app: nav2    # modified
+    - podSelector:
+        matchLabels:
+          app: core-app   # modified
+---      
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: multi-port-Policy
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      role: comm_bridge
+  policyTypes:
+  - Egress
+  - Ingress
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 10.0.0.0/24
+    ports:
+    - protocol: TCP
+      port: 35000
+      endPort: 36000
+  Ingress:
+  - from:
+    - ipBlock:
+        cidr: 10.0.0.0/24
+    ports:
+    - protocol: TCP
+      port: 35000
+      endPort: 36000
+---
+
+
+
+

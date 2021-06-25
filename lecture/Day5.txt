@@ -1,6 +1,7 @@
-# Helm
+# Helm : Kubernetes Package Manager
 
 ## ref: https://github.com/helm/helm
+## ref : https://helm.sh/ko/
 ## ref: https://helm.sh/docs/intro/install/
 
 curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
@@ -10,6 +11,189 @@ chmod 700 get_helm.sh
 # or curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash  # if you want to live on the edge 
 
 helm version
+
+helm repo list 
+helm repo add stable https://charts.helm.sh/stable
+
+### creat chart template
+helm create hello-world
+cd hello-world
+tree .
+-----
+.
+├── charts
+├── Chart.yaml
+├── templates
+│   ├── deployment.yaml
+│   ├── _helpers.tpl
+│   ├── hpa.yaml
+│   ├── ingress.yaml
+│   ├── NOTES.txt
+│   ├── serviceaccount.yaml
+│   ├── service.yaml
+│   └── tests
+│       └── test-connection.yaml
+└── values.yaml
+
+3 directories, 10 files
+------
+
+kubectl create namespace dev
+cd ../
+helm install -f hello-world/values.yaml -n dev hello-world ./hello-word 
+
+export POD_NAME=$(kubectl get pods --namespace dev -l \
+"app.kubernetes.io/name=hello-world,app.kubernetes.io/instance=hello-world" -o \
+jsonpath="{.items[0].metadata.name}")
+
+export CONTAINER_PORT=$(kubectl get pod --namespace dev \
+$POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}") 
+
+kubectl --namespace dev port-forward $POD_NAME 8080:$CONTAINER_PORT
+
+
+helm ls -n dev
+kubectl get svc -n dev
+kubectl get pod -n dev
+
+
+# ref : https://github.com/helm/charts
+
+helm repo add incubator https://charts.helm.sh/incubator
+helm repo list
+
+helm repo remove stable 
+helm repo add stable https://charts.helm.sh/stable
+
+helm repo update
+
+
+================================================
+
+helm search repo mysql
+helm search repo wordpress
+
+# go to https://artifacthub.io/
+# search wordpress
+
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm search repo wordpress
+
+helm install wp bitnami/wordpress --set service.port=8080
+kubectl get pod
+kubectl get svc
+
+helm show values bitnami/wordpress 
+
+helm delete wp
+
+-----------------------------
+
+helm create cool-chart 
+helm create echo 
+tree .
+
+
+## ref : https://choosealicense.com/licenses
+## ref : https://www.olis.or.kr/license/compareGuide.do
+
+
+helm package cool-chart
+helm lint cool-chart
+
+-----------------------------------
+
+helm create mychart
+cd mychart
+vi values.yaml
+---
+ClusterIP --> LoadBalancer 로 변경
+---
+
+helm install newmychart ./mychart
+
+helm ls
+kubectl get pod
+kubectl get svc
+
+
+helm template newchart ./mychart > newchart-output.yaml
+cat newchart-output.yaml 
+
+
+### upgrade
+vi values.yaml
+---
+LoadBalancer --> NodePort 로 변경
+---
+
+
+helm upgrade newmychart ./mychart
+helm ls
+helm status newmychart
+kubectl get svc
+
+helm history newmychart
+
+helm delete newmychart
+helm history newmychart
+
+helm rollback --help
+------------------------------------------------
+
+
+# github.com 에서 repo 생성 --> charts
+
+git clone https://github.com/swgu931/charts
+
+cd charts
+
+### branch 생성 
+git checkout -b gh-pages
+
+helm repo list
+mkdir stable 
+cd stable
+
+helm create example
+helm package example
+helm lint example
+
+helm repo index .
+cat index.yaml
+
+
+git add -A
+git commit -m "First chart example"
+git push origin gh-pages
+
+## https://github.com/swgu931/charts/settings/pages 에서 site 확인:
+## https://swgu931.github.io/charts/
+
+
+---------------
+## 운영자 영역
+
+curl https://swgu931.github.io/charts/stable/index.yaml
+
+helm repo add charts-stable https://swgu931.github.io/charts/stable
+helm repo update
+
+helm search repo example
+helm search hub wordpress
+
+helm install --namespace default example charts-stable/example
+helm ls
+kubectl get pod 
+kubectl get svc
+
+
+
+#ref : https://helm.sh/ko/docs/chart_template_guide/getting_started/
+
+
+
+cf)
 
 helm search hub 
 helm search hub | wc -l 
@@ -35,19 +219,13 @@ helm repo update
 
 ## 차트를 설치하려면 helm install 명령을 실행
 helm install bitnami/mariadb --generate-name
-
 helm ls 
-
 
 helm uninstall mariadb-1373494954
 helm ls
 helm status mariadb-1373494954
-
 helm search hub wordpress 
-
 helm show values bitnami/wordpress 
-
 helm install lookerz-wordpress bitnami/wordpress 
-
 helm status lookerz-wordpress 
 
