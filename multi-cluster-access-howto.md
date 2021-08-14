@@ -75,7 +75,7 @@ kubectl config --kubeconfig=config-demo view --minify
 ```
 kubectl config --kubeconfig=config-demo use-context exp-scratch
 ```
-- 
+ 
 ## Change the current context to dev-storage:
 ```
 kubectl config --kubeconfig=config-demo use-context dev-storage
