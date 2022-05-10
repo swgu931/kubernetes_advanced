@@ -49,7 +49,9 @@ kubectl get network-attachment-definitions
 kubectl describe network-attachment-definitions macvlan-conf
 ```
 
-### 3) Be sure ros2 test message be multicasted by Adding annotations
+### 3) Be sure ros2 test message be multicasted by applying the following yaml file 
+- carefully check annotations
+
 ```
 apiVersion: apps/v1
 kind: Deployment
@@ -74,9 +76,7 @@ spec:
         image: ros:foxy
         command: ["/bin/bash", "-c"]
         args: ["source /opt/ros/foxy/setup.bash && apt update && apt install -y curl && curl https://raw.githubusercontent.com/canonical/robotics-blog-k8s/main/publisher.py > publisher.py && /bin/python3 publisher.py talker"]
-
 ---
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
