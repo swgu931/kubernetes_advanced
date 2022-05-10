@@ -48,3 +48,58 @@ EOF
 kubectl get network-attachment-definitions
 kubectl describe network-attachment-definitions macvlan-conf
 ```
+
+### 3) Be sure ros2 test message be multicasted by Adding annotations
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ros-talker-deployment
+  labels:
+    app: ros-talker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ros-talker
+  template:
+    metadata:
+      labels:
+        app: ros-talker
+      annotations:
+        k8s.v1.cni.cncf.io/networks: macvlan-conf
+    spec:
+      containers:
+      - name: talker 
+        image: ros:foxy
+        command: ["/bin/bash", "-c"]
+        args: ["source /opt/ros/foxy/setup.bash && apt update && apt install -y curl && curl https://raw.githubusercontent.com/canonical/robotics-blog-k8s/main/publisher.py > publisher.py && /bin/python3 publisher.py talker"]
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ros-listener-deployment
+  labels:
+    app: ros-listener
+  annotations:
+    k8s.v1.cni.cncf.io/networks: macvlan-conf
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ros-listener
+  template:
+    metadata:
+      labels:
+        app: ros-listener
+      annotations:
+        k8s.v1.cni.cncf.io/networks: macvlan-conf
+    spec:
+      containers:
+      - name: listener
+        image: ros:foxy
+        command: ["/bin/bash", "-c"]
+        args: ["source /opt/ros/foxy/setup.bash && apt update && apt install -y curl && curl https://raw.githubusercontent.com/canonical/robotics-blog-k8s/main/subscriber.py > subscriber.py && /bin/python3 subscriber.py listener"]
+```
