@@ -12,7 +12,7 @@ chmod +x kubectl-kudo_0.19.0_<*OS종류>_x86_64 && mv kubectl-kudo_0.19.0_<*OS�
 
 kubectl kudo --version
 
-kubectl apply --validate=false -f https://github.com/jetstack/certmanager/releases/download/v1.0.1/cert-manager.yaml
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml
 
 kubectl get pods --namespace cert-manager
 
